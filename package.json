@@ -1,0 +1,31 @@
+{
+    "name": "handy-sign-language-detector",
+    "homepage": "https://mini-project.onrender.com/",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "dev": "npx nodemon ./src/index.js",
+        "build": "npm i && tsc && cd ./client && npm i && npm run build",
+        "prod": " node ./dist/index.js "
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {},
+    "dependencies": {
+        "@types/cors": "^2.8.12",
+        "bcrypt": "^5.1.0",
+        "body-parser": "^1.20.1",
+        "cors": "^2.8.5",
+        "dotenv": "^16.0.3",
+        "express": "^4.18.2",
+        "express-validator": "^7.0.1",
+        "jsonwebtoken": "^8.5.1",
+        "mongoose": "^6.7.2",
+        "morgan": "^1.10.0",
+        "validator": "^13.7.0"
+    }
+}
