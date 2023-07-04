@@ -1,19 +1,19 @@
 import { Box, Flex } from '@chakra-ui/react';
 import React, { useEffect, createRef } from 'react';
+import useSpeech from '../../hooks/useSpeech';
 
-export default function DetectorBrain(props) {
-  const synth = window.speechSynthesis;
+export default function DetectorBrain({
+  setPastPredictions,
+  setPrediction,
+  wantAudio,
+  detectorWindowRef,
+}) {
+  const { isAudioSupported, speak } = useSpeech();
   const videoRef = createRef(null);
   const canvasRef = createRef(null);
   const cameraSelectRef = createRef(null);
 
   const IMAGE_INTERVAL_MS = 1000;
-  let voices = [];
-
-  // populate with all the voices that client browser supports
-  function populateVoiceList() {
-    voices = synth.getVoices();
-  }
 
   // Draw rectangle
   const drawFaceRectangles = (video, canvas, { x, y, width, height }) => {
@@ -30,24 +30,10 @@ export default function DetectorBrain(props) {
     ctx.stroke();
   };
 
-  // Read the message using the internal browser api
-  function speak(message) {
-    if (message !== '') {
-      const utterThis = new SpeechSynthesisUtterance(message);
-      utterThis.onerror = function (event) {
-        console.error('SpeechSynthesisUtterance.onerror');
-      };
-      const selectedOption = 'Google हिन्दी';
-      utterThis.voice = voices.find(voice => voice.name === selectedOption);
-      synth.speak(utterThis);
-    }
-  }
-
   useEffect(() => {
     let deviceId;
     let trackId;
 
-    populateVoiceList();
     const video = videoRef.current;
     const canvas = canvasRef.current;
     const cameraSelect = cameraSelectRef.current;
@@ -67,11 +53,11 @@ export default function DetectorBrain(props) {
       }
     });
     // const deviceId = cameraSelect.selectedOptions[0].value;
-    // let socket = new WebSocket('ws://127.0.0.1:9000/detector');
+    let socket = new WebSocket('ws://127.0.0.1:8000/detector');
     // const socket = new WebSocket('ws://hand-test.herokuapp.com/detector');
-    const socket = new WebSocket(
-      'wss://socket-fastapi-gesture-detection-bdv72qo4da-em.a.run.app/detector'
-    );
+    // const socket = new WebSocket(
+    //   'wss://socket-fastapi-gesture-detection-bdv72qo4da-em.a.run.app/detector'
+    // );
     // );
 
     let intervalId;
@@ -89,9 +75,8 @@ export default function DetectorBrain(props) {
           video.srcObject = stream;
           video.play().then(() => {
             // Adapt overlay canvas size to the video size
-            canvas.width = props.detectorOptions.ref.current.clientWidth * 0.9;
-            canvas.height =
-              props.detectorOptions.ref.current.clientHeight * 0.9;
+            canvas.width = detectorWindowRef.current.clientWidth * 0.9;
+            canvas.height = detectorWindowRef.current.clientHeight * 0.9;
 
             // Send an image in the WebSocket every 42 ms
             intervalId = setInterval(() => {
@@ -116,7 +101,7 @@ export default function DetectorBrain(props) {
       const data = JSON.parse(event.data);
       // drawFaceRectangles(video, canvas, data.box);
 
-      props.detectorOptions.setPastPredictions(prevState => {
+      setPastPredictions(prevState => {
         if (prevState.length >= 16) {
           return prevState.slice(4, 16) + ' ' + data.label;
         } else {
@@ -124,14 +109,14 @@ export default function DetectorBrain(props) {
         }
       });
 
-      props.detectorOptions.setPrediction(prevState => {
+      setPrediction(prevState => {
         return {
           ...prevState,
           data: data.label,
           confidence: data.confidence,
         };
       });
-      if (props.detectorOptions.wantAudio) {
+      if (isAudioSupported && wantAudio) {
         speak(data.label);
       }
     });
@@ -156,7 +141,7 @@ export default function DetectorBrain(props) {
         trackId.stop();
       }
       // props.detectorOptions.setPastPredictions('');
-      props.detectorOptions.setPrediction({
+      setPrediction({
         data: '',
         confidence: '',
       });
@@ -179,7 +164,7 @@ export default function DetectorBrain(props) {
       <canvas
         ref={canvasRef}
         id="canvas"
-        width={props.detectorOptions.ref.current.clientWidth}
+        width={detectorWindowRef.current.clientWidth}
         style={{
           position: 'absolute',
         }}

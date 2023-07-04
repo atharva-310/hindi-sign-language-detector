@@ -7,22 +7,23 @@ import {
   useBreakpointValue,
   useDisclosure,
   Text,
+  Heading,
 } from '@chakra-ui/react';
 import React from 'react';
 
 import { FiMenu } from 'react-icons/fi';
 import logo from '../../assets/HandyBW.png';
 import profile from '../../assets/profile.png';
-import AuthModal from './AuthModal';
+import NavModal from './NavModal';
+import { useUser } from '../../hooks/userHooks';
 
-export const Navbar = props => {
-  const { isLoggedIn, auth } = props;
+const Navbar = () => {
   const isDesktop = useBreakpointValue({ base: false, md: true });
   const { isOpen, onOpen, onClose } = useDisclosure();
-
   const initialRef = React.useRef(null);
   const finalRef = React.useRef(null);
-  const btnRef = React.useRef(null);
+
+  const userInfo = useUser();
 
   return (
     <>
@@ -40,7 +41,7 @@ export const Navbar = props => {
         <Image src={logo} boxShadow="xl" borderRadius="lg" height="4rem" />
         {isDesktop ? (
           <Flex justify="flex-end" flex="1">
-            {!isLoggedIn ? (
+            {!userInfo.isLoggedIn ? (
               <Button
                 variant="solid"
                 size="lg"
@@ -51,20 +52,13 @@ export const Navbar = props => {
                 Login
               </Button>
             ) : (
-              <HStack spacing="3" py="5px">
-                <Text
-                  fontWeight="600"
-                  mt="13px"
-                  align="left"
-                  fontSize="24px"
-                  onClick={onOpen}
-                >
-                  Hi, {auth.user ? auth.user.name.first : 'mrX'}
-                </Text>
+              <HStack spacing="3" py="5px" alignItems="center">
+                <Heading onClick={onOpen} fontSize="3xl">
+                  Hi, {userInfo.user ? userInfo.user.name.first : 'mrX'}
+                </Heading>
                 <Image
                   boxSize="45px"
                   objectFit="conver"
-                  borderRadius="20%"
                   onClick={onOpen}
                   src={profile}
                   alt="Dan Abramov"
@@ -78,23 +72,23 @@ export const Navbar = props => {
               variant="ghost"
               icon={<FiMenu fontSize="1.25rem" />}
               aria-label="Open Menu"
-              ref={btnRef}
               onClick={onOpen}
             />
           </>
         )}
       </HStack>
 
-      {/*  AuthModal -> Pop up menu with all sign-up and sign-in options */}
+      {/*  NavModal -> Pop up menu with sign-up and sign-in options or account information */}
 
-      <AuthModal
+      <NavModal
         initialRef={initialRef}
         finalRef={finalRef}
         isOpen={isOpen}
         onClose={onClose}
         onOpen={onOpen}
-        {...props}
       />
     </>
   );
 };
+
+export default Navbar;

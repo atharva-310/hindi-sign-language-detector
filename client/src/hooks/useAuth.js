@@ -1,78 +1,74 @@
-import { useEffect, useState } from 'react';
+import { urlencodeBody } from '../utils';
+import { useSetUser } from './userHooks';
+/**
+ * UseAuth (custom hook)
+ * Return function which will make api calls for authentication
+ * Error thrown by this functions will be caught by the Action function which call them
+ *
+ * @returns {login, singup, logout}
+ *
+ */
+
 export default function useAuth() {
-  const [isLoggedIn, setLogin] = useState(false);
-  const [userInfo, setUser] = useState(null);
-  const [token, setToken] = useState(null);
+  const setUser = useSetUser();
 
-  const addUser = async () => {
-    fetch('/protected/user-info', {
-      method: 'GET', // or 'PUT'
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + token,
-      },
-    })
-      .then(response => response.json())
-      .then(data => {
-        if (data.data.user) {
-          setUser(data.data.user);
-          setLogin(true);
-        }
-      });
-  };
-
-  const signIn = async credentials => {
-    const data = {
-      email: credentials.email,
-      password: credentials.password,
+  const login = async loginData => {
+    const body = {
+      email: loginData.email,
+      password: loginData.password,
     };
-    return fetch('/auth/sign-in', {
-      method: 'POST', // or 'PUT'
+    const encodedBody = urlencodeBody(body);
+
+    const response = await fetch('/auth/sign-in', {
+      method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: JSON.stringify(data),
-    })
-      .then(response => response.json())
-      .then(data => {
-        if (data.token) {
-          setToken(data.token);
-          setLogin(true);
-          return true;
-        } else {
-          return false;
-        }
-      });
-  };
-  const signUp = async data => {
-    console.log(data);
-    fetch('/auth/create-user', {
-      method: 'POST', // or 'PUT'
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    })
-      .then(response => response.json())
-      .then(data => {
-        console.log(data);
-        if (data.ok === 'success') {
-        }
-      })
-      .catch(err => {
-        console.log(err);
-      });
-  };
-  const logout = () => {
-    setLogin(false);
-    setUser(null);
-    setToken(null);
+      body: encodedBody,
+    });
+    const data = await response.json();
+    if (data.user) {
+      return data;
+    } else {
+      throw Error(data);
+    }
   };
 
-  useEffect(() => {
-    if (isLoggedIn && token) {
-      addUser();
+  const signUp = async signupData => {
+    const body = {
+      email: signupData.email,
+      password: signupData.password,
+      name: {
+        first: signupData.first,
+        last: signupData.last,
+      },
+    };
+
+    const encodedBody = urlencodeBody(body);
+    const response = await fetch('/auth/create-user', {
+      method: 'POST', // or 'PUT'
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await response.json();
+
+    if (data?.user) {
+      return data;
+    } else {
+      throw Error(data.message);
     }
-  }, [token]);
-  return [isLoggedIn, userInfo, signIn, signUp, logout];
+  };
+
+  const logout = () => {
+    setUser({
+      isLoggedIn: false,
+      user: null,
+      token: null,
+    });
+    window.localStorage.removeItem('userInfo');
+  };
+
+  return { login, signUp, logout };
 }
