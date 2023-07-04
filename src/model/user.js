@@ -24,17 +24,18 @@ const UserSchema = mongoose.Schema(
         },
         password: {
             type: String,
+            required: [true, 'Password is required'],
         },
         name: {
             first: {
                 type: String,
+                trim: true,
                 require: true,
                 maxLength: 30,
             },
             last: {
                 type: String,
                 maxLength: 30,
-                default: null,
             },
         },
     },

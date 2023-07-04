@@ -23,7 +23,7 @@ const app = express()
 
 app.use(cors())
 app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({ extended: false }))
+app.use(express.urlencoded({ extended: true }))
 app.use(morgan('dev'))
 
 const __filename = fileURLToPath(import.meta.url)
@@ -35,7 +35,7 @@ app.use(express.static(buildPath))
 app.post(
     '/auth/create-user',
     body('name.first').exists().isString(),
-    body('name.last').isString(),
+    body('name.last').isString().optional(),
     body('email').isString(),
     body('password').exists().isString(),
     handleInputErrors,
