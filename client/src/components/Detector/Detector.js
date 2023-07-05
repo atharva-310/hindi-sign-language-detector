@@ -1,95 +1,145 @@
-import { Flex, Box, HStack, Image, useBreakpointValue } from '@chakra-ui/react';
-import { useState, useRef } from 'react';
+import { Box, Flex } from '@chakra-ui/react';
+import React, { useEffect, useRef } from 'react';
 
-import Annotate from './DetectorBrain';
+import { drawFaceRectangles } from '../../utils/index';
 
-import Info from './InfoPanel';
-import Instruction from './Instructions/Instruction';
+const IMAGE_INTERVAL_MS = 1000;
 
-import { useUser } from '../../hooks/userHooks';
-import ControlPanel from './ControlPanel';
+const Detector = ({ detectorOptions, isAudioSupported, speak }) => {
+  const { setPastPredictions, setPrediction, wantAudio, detectorWindowRef } =
+    detectorOptions;
 
-export default function Detector() {
-  const detectorWindowRef = useRef(null);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  // const cameraSelectRef = useRef(null);
 
-  // Detector states
-  const [dectectorOn, setDetector] = useState(false);
-  const [wantAudio, setAudio] = useState(false);
-  const [pastPredictions, setPastPredictions] = useState('');
-  const [predction, setPrediction] = useState({
-    data: '',
-    confidence: '',
-  });
+  useEffect(() => {
+    let track = null;
+    let intervalId = null;
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    // const cameraSelect = cameraSelectRef.current;
 
-  const value = useBreakpointValue(
-    {
-      base: true,
-      xs: true,
-      sm: true,
-      md: true,
-      lg: false,
-    },
-    { ssr: false }
-  );
+    // Function will initailly set up the devices
+    const setupVideoStream = async () => {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(
+          device => device.kind === 'videoinput'
+        );
+
+        /**
+         *  If User is given the option to select 
+      
+          videoDevices.forEach(device => {
+            const deviceOption = document.createElement('option');
+            deviceOption.innerText = device.label;
+            cameraSelect.appendChild(deviceOption);
+            deviceOption.value = device.deviceId;
+          });
+
+         */
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: {
+            // deviceId: cameraSelect.value,
+            deviceId: videoDevices[0].deviceId,
+          },
+        });
+
+        video.srcObject = stream;
+        await video.play();
+
+        canvas.width = detectorWindowRef.current.clientWidth * 0.9;
+        canvas.height = detectorWindowRef.current.clientHeight * 0.9;
+
+        intervalId = setInterval(() => {
+          // virtual canvas will be used to take a snap and send throught socket
+
+          const virtualCanvas = document.createElement('canvas');
+          const ctx = virtualCanvas.getContext('2d');
+          virtualCanvas.width = video.videoWidth;
+          virtualCanvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0);
+          virtualCanvas.toBlob(blob => socket.send(blob), 'image/jpeg');
+        }, IMAGE_INTERVAL_MS);
+
+        track = stream.getTracks()[0];
+      } catch (error) {
+        console.error('Error setting up video stream:', error);
+      }
+    };
+
+    const socket = new WebSocket('ws://127.0.0.1:8000/detector');
+    // const socket = new WebSocket('ws://hand-test.herokuapp.com/detector');
+
+    socket.addEventListener('open', setupVideoStream);
+
+    socket.addEventListener('message', event => {
+      const data = JSON.parse(event.data);
+
+      setPastPredictions(prevState => {
+        const updatedState =
+          prevState.length >= 16
+            ? prevState.slice(4, 16) + ' ' + data.label
+            : prevState + ' ' + data.label;
+        return updatedState;
+      });
+
+      setPrediction(prevState => ({
+        ...prevState,
+        data: data.label,
+        confidence: data.confidence,
+      }));
+
+      if (isAudioSupported && wantAudio) {
+        speak(data.label);
+      }
+    });
+
+    socket.addEventListener('close', () => {
+      if (intervalId || track) {
+        clearInterval(intervalId);
+        track.stop();
+      }
+      socket.close();
+    });
+
+    // CleanUp function to clear the setInterval and stream track
+    return () => {
+      if (intervalId || track) {
+        clearInterval(intervalId);
+        track.stop();
+      }
+      socket.close();
+      setPrediction({ data: '', confidence: '' });
+    };
+  }, []);
 
   return (
-    <>
-      <Flex
-        mt="100px"
-        width="100%"
-        flexWrap="wrap"
-        flexDirection={value ? 'column' : 'row'}
-        justifyContent="space-between"
-        alignItems="center"
-      >
-        <Box
-          width={value ? '100%' : '65%'}
-          height={['300px', '400px', '500px', '570px']}
-          borderRadius="20px"
-          boxShadow="dark-lg"
-          rounded="lg"
-          bg="#F9F5F2"
-          ref={detectorWindowRef}
-        >
-          {dectectorOn ? (
-            <>
-              <Annotate
-                detectorOptions={{
-                  setPastPredictions: setPastPredictions,
-                  setPrediction: setPrediction,
-                  wantAudio: wantAudio,
-                  detectorWindowRef: detectorWindowRef,
-                }}
-              />
-            </>
-          ) : (
-            <Instruction />
-          )}
-        </Box>
-        <Flex
-          justifyContent="space-between"
-          direction="column"
-          width={value ? '100%' : '35%'}
-          pl={value ? '0' : '3%'}
-          marginTop={value ? '30px' : ''}
-          height={['auto', 'auto', 'auto', '570px']}
-          borderRadius="20px"
-        >
-          <ControlPanel
-            pastPredictions={pastPredictions}
-            wantAudio={wantAudio}
-            setAudio={setAudio}
-            dectectorOn={dectectorOn}
-            setDetector={setDetector}
-          />
-          <Info
-            detectorOptions={{
-              dectectorOn: dectectorOn,
-              prediction: predction,
-            }}
-          />
-        </Flex>
-      </Flex>
-    </>
+    <Flex justifyContent="center" height="100%" width="100%">
+      {/* <select ref={cameraSelectRef} id="camera-select" hidden></select> */}
+      <video
+        ref={videoRef}
+        id="video"
+        style={{
+          width: '100%',
+          height: '90%',
+          margin: 'auto',
+          borderRadius: '35px',
+        }}
+      ></video>
+      <canvas
+        ref={canvasRef}
+        id="canvas"
+        width={detectorWindowRef?.current?.clientWidth}
+        style={{
+          position: 'absolute',
+        }}
+      ></canvas>
+    </Flex>
   );
-}
+};
+
+export default Detector;

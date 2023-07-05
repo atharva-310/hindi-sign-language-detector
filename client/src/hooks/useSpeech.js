@@ -23,7 +23,7 @@ const useSpeech = () => {
   }, []);
 
   // function to read the given text default voice will be HINDI
-  const speak = (text, voice) => {
+  const speak = (text, voice = 'Google हिन्दी') => {
     if (!isAudioSupported) {
       toast({
         ...toastOption,

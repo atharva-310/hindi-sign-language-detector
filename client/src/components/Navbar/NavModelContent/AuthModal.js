@@ -52,7 +52,7 @@ export const AuthModal = ({
         token: response.token,
       };
       setUser(data);
-      window.localStorage.setItem('userInfo', JSON.stringify(data));
+      localStorage.setItem('userInfo', JSON.stringify(data));
       onClose();
       toast({
         ...toastOption,
@@ -98,7 +98,6 @@ export const AuthModal = ({
       });
       setLoginForm(true);
     } catch (err) {
-      console.log(err);
       toast({
         ...toastOption,
         title: 'Failed to Create Account',

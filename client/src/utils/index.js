@@ -18,3 +18,17 @@ export function urlencodeBody(body) {
   }
   return (encodedBody = encodedBody.join('&'));
 }
+
+// function to draw Bounding box
+export const drawFaceRectangles = (video, canvas, { x, y, width, height }) => {
+  const ctx = canvas.getContext('2d');
+  ctx.width = video.videoWidth;
+  ctx.height = video.videoHeight;
+  ctx.beginPath();
+  ctx.clearRect(0, 0, ctx.width, ctx.height);
+  ctx.lineWidth = '3';
+  ctx.strokeStyle = '#49fb35';
+  ctx.beginPath();
+  ctx.rect(x, y, width, height);
+  ctx.stroke();
+};

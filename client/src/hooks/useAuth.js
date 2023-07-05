@@ -27,11 +27,13 @@ export default function useAuth() {
       body: encodedBody,
     });
     const data = await response.json();
-    if (data.user) {
-      return data;
-    } else {
-      throw Error(data);
+    if(data?.status === "success" ) {
+      return data.payload
     }
+    else if (data?.status === "error" ) {
+      throw Error(data.message);
+
+    } 
   };
 
   const signUp = async signupData => {
@@ -46,7 +48,7 @@ export default function useAuth() {
 
     const encodedBody = urlencodeBody(body);
     const response = await fetch('/auth/create-user', {
-      method: 'POST', // or 'PUT'
+      method: 'POST', 
       headers: {
         'Content-Type': 'application/json',
       },
@@ -54,8 +56,8 @@ export default function useAuth() {
     });
     const data = await response.json();
 
-    if (data?.user) {
-      return data;
+    if (data.status === "success") {
+      return data.payload;
     } else {
       throw Error(data.message);
     }

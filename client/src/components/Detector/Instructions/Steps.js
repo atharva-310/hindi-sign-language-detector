@@ -34,7 +34,7 @@ const stepsData = [
 
 export const Steps = stepsData.map((step, index) => {
   return (
-    <AccordionItem>
+    <AccordionItem key={index}>
       <h2>
         <AccordionButton>
           <HStack flex="1">

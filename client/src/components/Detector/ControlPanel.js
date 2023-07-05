@@ -21,9 +21,10 @@ const ControlPanel = ({
   setAudio,
   dectectorOn,
   setDetector,
+  speak,
+  isAudioSupported,
 }) => {
   const { isLoggedIn } = useUser();
-  const { speak, isAudioSupported } = useSpeech();
   const toast = useToast();
   return (
     <Box bg="#2C5282" minH="30%" boxShadow="dark-lg" rounded="lg" p="20px">
@@ -43,7 +44,7 @@ const ControlPanel = ({
                   colorScheme="white"
                   // leftIcon={<RiVoiceprintLine fontSize="30px" />}
                   color="black"
-                  isDisabled="true"
+                  isDisabled={true}
                 >
                   {pastPredictions.length < 2
                     ? 'Past Prediction'
@@ -54,7 +55,7 @@ const ControlPanel = ({
           </Tooltip>
 
           <Button
-            isDisabled={!isLoggedIn || !isAudioSupported ? 'false' : 'true'}
+            isDisabled={!isLoggedIn || !isAudioSupported}
             size="lg"
             padding="10px"
             colorScheme="yellow"
@@ -68,14 +69,13 @@ const ControlPanel = ({
         </HStack>
         <HStack color="white" width="98%" mt="10px" justify="space-around">
           <Button
-            isDisabled={!isLoggedIn ? 'false' : 'true'}
+            isDisabled={!isLoggedIn}
             width="35%"
             size="lg"
             colorScheme="green"
             leftIcon={<RiBodyScanFill fontSize="30px" />}
             variant="solid"
             onClick={() => {
-              // console.log(dectectorOn);
               if (!dectectorOn) {
                 setDetector(true);
               }
@@ -84,7 +84,7 @@ const ControlPanel = ({
             Play
           </Button>
           <Button
-            isDisabled={!isLoggedIn ? 'false' : 'true'}
+            isDisabled={!isLoggedIn}
             width="35%"
             size="lg"
             colorScheme="red"
@@ -100,7 +100,7 @@ const ControlPanel = ({
             bg="white"
             variant="solid"
             width="20%"
-            isDisabled={!isLoggedIn ? 'false' : 'true' && !dectectorOn}
+            isDisabled={!isLoggedIn || dectectorOn}
             onClick={() => {
               if (isAudioSupported) {
                 setAudio(prevState => !prevState);

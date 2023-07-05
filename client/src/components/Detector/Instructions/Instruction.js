@@ -34,7 +34,7 @@ export default function Instruction() {
           <Image src={hero} maxH="90%" />
         </Box>
       )}
-      <VStack height="80%" maxH="90%" overflowY="scroll">
+      <VStack height="80%" maxH="90%" overflowY="scroll" >
         <HStack justifyContent="flex-end">
           <Heading
             fontSize="30px"
