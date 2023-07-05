@@ -8,28 +8,36 @@ import { validationResult } from 'express-validator'
 export const Authenticator = (req, res, next) => {
     const bearer = req.headers.authorization
     if (!bearer) {
-        res.status(401)
-        res.send('NOT AUTHORISED')
+        res.status(401).send({ status: 'error', message: 'NOT AUTHORISED' })
+
         return
     }
 
     const [, token] = bearer.split(' ')
-    console.log(token)
+
     if (!token) {
-        res.status(401)
-        res.send('NOT AUTHORISED')
+        res.status(401).send({ status: 'error', message: 'NOT AUTHORISED' })
         return
     }
 
     try {
-        const payload = jwt.verify(token, 'it is a secret')
-        req.user = payload
+        const user = jwt.verify(token, 'it is a secret')
+        req.userInfo = {
+            user: {
+                name: {
+                    first: user.name.first,
+                    last: user.name.last,
+                },
+                email: user.email,
+            },
+            token: token,
+        }
+
         next()
         return
     } catch (err) {
-        console.log(err)
-        res.send(402)
-        res.send('NOT A VAILD TOKEN')
+        res.status(402).send({ status: 'error', message: 'Token is Expired' })
+
         return
     }
 }
@@ -38,8 +46,9 @@ export const Authenticator = (req, res, next) => {
 export const handleInputErrors = (req, res, next) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
-        res.status(400)
-        res.json({
+        res.status(400).send({
+            status: 'error',
+            message: 'Make sure all the field are entered corectly',
             errors: errors.array(),
         })
         return

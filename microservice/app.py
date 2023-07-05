@@ -47,7 +47,8 @@ async def detect(websocket: WebSocket, queue: asyncio.Queue):
 
         data = np.frombuffer(bytes, dtype=np.uint8)
         img = cv2.imdecode(data, 1)
-        img = cv2.resize(img,(920,620))
+        
+        # img = cv2.resize(img,(920,620))
         hight,width,_ = img.shape
         blob = cv2.dnn.blobFromImage(img, 1/255,(224,224),(0,0,0),swapRB = True,crop= False)
 
@@ -80,7 +81,7 @@ async def detect(websocket: WebSocket, queue: asyncio.Queue):
 
         indexes = cv2.dnn.NMSBoxes(boxes,confidences,.5,.4)
         
-        output = [];
+        output = []
         if  len(indexes)>0:
             for i in indexes.flatten():
                 x,y,w,h = boxes[i]
@@ -99,6 +100,7 @@ async def detect(websocket: WebSocket, queue: asyncio.Queue):
                     }
                 }
                 await websocket.send_json(report)
+   
         
 
 

@@ -1,7 +1,7 @@
 // TO Access the Environment variables using process.env
 import * as dontenv from 'dotenv'
 
-import app from './server.js'
+import app from './app.js'
 import { connectDatabase } from './config/mongoose.js'
 
 dontenv.config()

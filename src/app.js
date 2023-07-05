@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url'
 import { body } from 'express-validator'
 
 import { Authenticator, handleInputErrors } from './middleware.js'
-import { dectector, userInfo } from './controllers/user.js'
+import { dectector, checkUser } from './controllers/user.js'
 import { createUser, signIn } from './controllers/auth.js'
 
 const app = express()
@@ -18,7 +18,7 @@ const app = express()
  * - bodyParser.urlencoded([options]) -> Same as json but with content-type "application/x-www-form-urlencoded"
  *
  *
- * https://github.com/expressjs/body-parser#bodyparserurlencodedoptions
+ *   https://github.com/expressjs/body-parser#bodyparserurlencodedoptions
  */
 
 app.use(cors())
@@ -52,17 +52,16 @@ app.post(
 /**
  *  * *  Protected Routes * *
  *  /detector  -> will check whether Detector access must be granted of not
- *  /user-info -> return the user information
+ *  /check     -> checks whether the user token is expired
  *
  *   Authenticator(middleware) -> Will verify the user token and protect the route
  */
 app.get('/protected/detector', Authenticator, dectector)
-app.get('/protected/user-info', Authenticator, userInfo)
+app.get('/protected/check', Authenticator, checkUser)
 
 const rootRouter = express.Router()
-/*
- * all your other routes go here
- */
+
+// all your other routes go here
 rootRouter.get('*', async (req, res, next) => {
     res.sendFile(path.join(buildPath, 'index.html'))
 })
