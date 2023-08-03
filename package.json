@@ -8,7 +8,7 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "dev": "npx nodemon ./src/index.js",
-        "build": "npm i && tsc && cd ./client && npm i && npm run build",
+        "build": "npm i && cd ./client && npm i && npm run build",
         "prod": " node ./dist/index.js "
     },
     "keywords": [],
