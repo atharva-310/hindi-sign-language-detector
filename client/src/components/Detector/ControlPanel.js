@@ -12,7 +12,6 @@ import { BiUserVoice } from 'react-icons/bi';
 import { HiStop } from 'react-icons/hi';
 import { RiVoiceprintLine, RiBodyScanFill } from 'react-icons/ri';
 import { useUser } from '../../hooks/userHooks';
-import useSpeech from '../../hooks/useSpeech';
 import { toastOption } from '../../utils';
 
 const ControlPanel = ({
@@ -61,6 +60,7 @@ const ControlPanel = ({
             colorScheme="yellow"
             leftIcon={<RiVoiceprintLine fontSize="25px" />}
             onClick={() => {
+              console.log(isAudioSupported, pastPredictions);
               if (isAudioSupported) speak(pastPredictions);
             }}
           >

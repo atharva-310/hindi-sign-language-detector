@@ -1,4 +1,4 @@
-import { Box, Flex } from '@chakra-ui/react';
+import { Flex } from '@chakra-ui/react';
 import React, { useEffect, useRef } from 'react';
 
 import { drawFaceRectangles } from '../../utils/index';
@@ -92,6 +92,8 @@ const Detector = ({ detectorOptions, isAudioSupported, speak }) => {
         data: data.label,
         confidence: data.confidence,
       }));
+
+      // drawFaceRectangles(video, canvas, data.box);
 
       if (isAudioSupported && wantAudio) {
         speak(data.label);

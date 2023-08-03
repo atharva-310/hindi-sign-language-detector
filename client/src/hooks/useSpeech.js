@@ -20,6 +20,10 @@ const useSpeech = () => {
     } else {
       setIsSupported(false);
     }
+    return () => {
+      const synth = window.speechSynthesis;
+      synth.cancel();
+    };
   }, []);
 
   // function to read the given text default voice will be HINDI
@@ -38,14 +42,16 @@ const useSpeech = () => {
     }
 
     const synth = window.speechSynthesis;
-    const utterance = new SpeechSynthesisUtterance(text);
+    synth.cancel();
 
+    const utterance = new SpeechSynthesisUtterance(text);
     if (voice) {
       const selectedVoice = voices.find(v => v.name === voice);
       if (selectedVoice) {
         utterance.voice = selectedVoice;
       }
     }
+
     synth.speak(utterance);
     setSpeaking(true);
 
