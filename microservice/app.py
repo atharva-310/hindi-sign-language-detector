@@ -29,36 +29,44 @@ async def create_upload_file(file: UploadFile):
 class Report(BaseModel):
     hands: List[Tuple[int, int, int, int]]
 
+# Fill the queue specific to the websocket instance 
 async def receive(websocket: WebSocket, queue: asyncio.Queue):
     bytes = await websocket.receive_bytes()
     try:
         queue.put_nowait(bytes)     
     except asyncio.QueueFull:
-
         pass
 
 
 async def detect(websocket: WebSocket, queue: asyncio.Queue):
+
+    # Model Initialization
     net = cv2.dnn.readNetFromDarknet("yolov3_custom_48class.cfg",r"yolov3_custom_48class_10000.weights")
     classes = ['अं','ए','ऐ','औ','ञ','ङ','अ','आ','इ','ई','ऋ','ओ','अः','क','ख','ग','घ','च','छ','ज','झ','ट','ठ','ड','ढ','ण','त','थ','द','ध','न','प','फ','ब','भ','म','य','र','ल','व','श','ष','स','ह','श्र','क्ष','त्र','ज्ञ']
     print("detector started")
     while True:
-        bytes = await queue.get()    
 
+        # Fetching the Image from the queue
+        bytes = await queue.get()    
         data = np.frombuffer(bytes, dtype=np.uint8)
+
+        # Image Preprocessing
         img = cv2.imdecode(data, 1)
-        
         # img = cv2.resize(img,(920,620))
         hight,width,_ = img.shape
         blob = cv2.dnn.blobFromImage(img, 1/255,(224,224),(0,0,0),swapRB = True,crop= False)
-
+        
+        # Object Detection
         net.setInput(blob)
         output_layers_name = net.getUnconnectedOutLayersNames()
         layerOutputs = net.forward(output_layers_name)
+
+        # Post-processing
         boxes =[]
         confidences = []
         class_ids = []
 
+        
         for output in layerOutputs:
             for detection in output:
                 score = detection[5:]
@@ -81,7 +89,7 @@ async def detect(websocket: WebSocket, queue: asyncio.Queue):
 
         indexes = cv2.dnn.NMSBoxes(boxes,confidences,.5,.4)
         
-        output = []
+        # Sending detection results
         if  len(indexes)>0:
             for i in indexes.flatten():
                 x,y,w,h = boxes[i]
@@ -110,6 +118,8 @@ async def face_detection(websocket: WebSocket):
     await websocket.accept()
     queue: asyncio.Queue = asyncio.Queue(maxsize=20)
     detect_task = asyncio.create_task(detect(websocket, queue))
+
+    # Will continously receive the images
     try:
         while True:
             await receive(websocket, queue)
